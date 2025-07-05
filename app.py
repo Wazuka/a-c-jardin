@@ -114,7 +114,7 @@ def delete_page(page_id):
 
 
 # --- Interface ---
-if st.button("Je commence ma journée"):
+if st.button("Je commence ma journée", key="start_day"):
     tz = pytz.timezone("Europe/Paris")
     now = datetime.now(tz)
     date_str = now.strftime("%Y-%m-%d")
