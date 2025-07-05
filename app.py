@@ -42,12 +42,7 @@ def add_entry_to_notion(date_str, time_str, message):
             "Message": { "rich_text": [{ "text": { "content": message } }] }
         }
     }
-    res = requests.post(url, headers=headers, json=data)
-    
-    # Debug : affichage des infos de retour de Notion
-    st.write("Code de réponse :", res.status_code)
-    st.write("Contenu brut :", res.text)
-    
+    res = requests.post(url, headers=headers, json=data)  
     return res.status_code == 200 or res.status_code == 201
 
 
