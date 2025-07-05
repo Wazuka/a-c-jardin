@@ -5,20 +5,34 @@ import random
 from datetime import datetime
 import pytz
 
-# Configuration de la page
 st.set_page_config(page_title="Jardin A-Campo", page_icon="🌱")
 
-# Masquer la sidebar et éléments superflus
 st.markdown("""
     <style>
         [data-testid="stSidebar"] {
             display: none;
         }
         footer, header {visibility: hidden;}
+        .secret-button {
+            border: none;
+            background-color: transparent;
+            font-size: 22px;
+            cursor: pointer;
+            position: fixed;
+            bottom: 10px;
+            right: 12px;
+            z-index: 100;
+        }
+        .secret-input {
+            position: fixed;
+            bottom: 45px;
+            right: 10px;
+            width: 120px;
+            z-index: 101;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Authentification Notion
 NOTION_TOKEN = "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"
 DATABASE_ID = "227d9baaf01380b88d2dfdf1145b3750"
 
@@ -74,7 +88,6 @@ def clean_duplicates():
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
     res = requests.post(url, headers=headers)
     data = res.json()
-
     if "results" not in data:
         st.error("Impossible de récupérer les données depuis Notion.")
         return
@@ -97,13 +110,10 @@ def clean_duplicates():
                 deleted = delete_page(pid)
                 if deleted:
                     total_archived += 1
-
     st.success(f"{total_archived} doublon(s) supprimé(s) avec succès.")
 
-# Interface principale
 if "confirm_replace" not in st.session_state:
     st.session_state.confirm_replace = False
-
 if "reveal_code" not in st.session_state:
     st.session_state.reveal_code = False
 
@@ -121,7 +131,6 @@ if st.button("Je commence ma journée", key="start_day"):
     if existing_page_id and not st.session_state.confirm_replace:
         st.warning("🌿 Une entrée existe déjà pour aujourd’hui.\n👉 Clique à nouveau pour la remplacer.")
         st.session_state.confirm_replace = True
-
     else:
         if existing_page_id:
             deleted = delete_page(existing_page_id)
@@ -130,7 +139,6 @@ if st.button("Je commence ma journée", key="start_day"):
             else:
                 st.error("❌ Erreur lors de la suppression de l’entrée existante.")
                 st.stop()
-
         success = add_entry_to_notion(date_str, time_str, message)
         if success:
             st.success(f"🌱 Journée commencée à {time_str} – {message}")
@@ -138,17 +146,16 @@ if st.button("Je commence ma journée", key="start_day"):
         else:
             st.error("Échec de l'enregistrement dans Notion.")
 
-# 🫣 Accès caché en bas de page
-st.markdown("---")
-cols = st.columns([6, 1, 6])
-with cols[1]:
-    if st.button("🫣", key="reveal"):
-        st.session_state.reveal_code = not st.session_state.reveal_code
+# 👁️ Emoji discret pour révéler le champ secret
+if st.button("🫣", key="toggle", help="Code secret", use_container_width=False):
+    st.session_state.reveal_code = not st.session_state.reveal_code
 
+# Code secret affiché si déclenché
 if st.session_state.reveal_code:
-    code = st.text_input("Code secret", type="password", key="secret_code_bottom")
-    if code == "entretien":
-        st.header("🛠️ Maintenance cachée")
-        st.write("Bienvenue dans la salle des machines.")
-        if st.button("Nettoyer les doublons maintenant", key="cleaner"):
-            clean_duplicates()
+    with st.container():
+        code = st.text_input("Code secret", type="password", key="secret_code")
+        if code == "entretien":
+            st.header("🛠️ Maintenance cachée")
+            st.write("Bienvenue dans la salle des machines.")
+            if st.button("Nettoyer les doublons maintenant", key="cleaner"):
+                clean_duplicates()
