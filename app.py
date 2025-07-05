@@ -1,6 +1,5 @@
 
 import streamlit as st
-import streamlit.components.v1 as components
 import requests
 import random
 from datetime import datetime
@@ -9,20 +8,15 @@ import pytz
 # Configuration de la page
 st.set_page_config(page_title="Jardin A-Campo", page_icon="🌱")
 
-# Fermer temporairement la sidebar à l’ouverture pour cacher le champ "code secret"
-components.html(
-    """
-    <script>
-    const sidebar = window.parent.document.querySelector('section[data-testid="stSidebar"]');
-    if (sidebar) sidebar.style.display = 'none';
-    setTimeout(() => {
-        if (sidebar) sidebar.style.display = '';
-    }, 100);
-    </script>
-    """,
-    height=0,
-    width=0,
-)
+# Masquer la sidebar et éléments superflus
+st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+        footer, header {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
 # Authentification Notion
 NOTION_TOKEN = "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"
@@ -42,19 +36,6 @@ messages = [
     "Chaque clic est une pousse en plus 🌿",
     "Tu sais pourquoi tu es là. Allez. C’est parti. 🚀",
 ]
-
-# Entrée du code secret dans la sidebar
-with st.sidebar:
-    st.markdown(
-        "<style>div[data-testid='stSidebar'] section input {background-color: #f7f7f7; font-size: 8px; width: 30px; height: 25px; border-radius: 4px; padding: 0px;}</style>",
-        unsafe_allow_html=True
-    )
-    code = st.text_input("", type="password", key="secret_code")
-
-if code == "entretien":
-    page = "Maintenance"
-else:
-    page = "Accueil"
 
 def get_page_id_for_today():
     tz = pytz.timezone("Europe/Paris")
@@ -120,44 +101,54 @@ def clean_duplicates():
     st.success(f"{total_archived} doublon(s) supprimé(s) avec succès.")
 
 # Interface principale
-if page == "Accueil":
-    st.title("🌱 Jardin A-Campo")
+if "confirm_replace" not in st.session_state:
+    st.session_state.confirm_replace = False
 
-    if "confirm_replace" not in st.session_state:
-        st.session_state.confirm_replace = False
+if "reveal_code" not in st.session_state:
+    st.session_state.reveal_code = False
 
-    if st.button("Je commence ma journée", key="start_day"):
-        tz = pytz.timezone("Europe/Paris")
-        now = datetime.now(tz)
-        date_str = now.strftime("%Y-%m-%d")
-        time_str = now.strftime("%H:%M:%S")
-        message = random.choice(messages)
+st.title("🌱 Jardin A-Campo")
 
-        existing_page_id = get_page_id_for_today()
+if st.button("Je commence ma journée", key="start_day"):
+    tz = pytz.timezone("Europe/Paris")
+    now = datetime.now(tz)
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H:%M:%S")
+    message = random.choice(messages)
 
-        if existing_page_id and not st.session_state.confirm_replace:
-            st.warning("🌿 Une entrée existe déjà pour aujourd’hui.\n👉 Clique à nouveau pour la remplacer.")
-            st.session_state.confirm_replace = True
+    existing_page_id = get_page_id_for_today()
 
-        else:
-            if existing_page_id:
-                deleted = delete_page(existing_page_id)
-                if deleted:
-                    st.info("L’entrée précédente a été supprimée.")
-                else:
-                    st.error("❌ Erreur lors de la suppression de l’entrée existante.")
-                    st.stop()
+    if existing_page_id and not st.session_state.confirm_replace:
+        st.warning("🌿 Une entrée existe déjà pour aujourd’hui.\n👉 Clique à nouveau pour la remplacer.")
+        st.session_state.confirm_replace = True
 
-            success = add_entry_to_notion(date_str, time_str, message)
-            if success:
-                st.success(f"🌱 Journée commencée à {time_str} – {message}")
-                st.session_state.confirm_replace = False
+    else:
+        if existing_page_id:
+            deleted = delete_page(existing_page_id)
+            if deleted:
+                st.info("L’entrée précédente a été supprimée.")
             else:
-                st.error("Échec de l'enregistrement dans Notion.")
+                st.error("❌ Erreur lors de la suppression de l’entrée existante.")
+                st.stop()
 
-elif page == "Maintenance":
-    st.header("🛠️ Maintenance cachée")
-    st.write("Bienvenue dans la salle des machines.")
+        success = add_entry_to_notion(date_str, time_str, message)
+        if success:
+            st.success(f"🌱 Journée commencée à {time_str} – {message}")
+            st.session_state.confirm_replace = False
+        else:
+            st.error("Échec de l'enregistrement dans Notion.")
 
-    if st.button("Nettoyer les doublons maintenant", key="cleaner"):
-        clean_duplicates()
+# 🫣 Accès caché en bas de page
+st.markdown("---")
+cols = st.columns([6, 1, 6])
+with cols[1]:
+    if st.button("🫣", key="reveal"):
+        st.session_state.reveal_code = not st.session_state.reveal_code
+
+if st.session_state.reveal_code:
+    code = st.text_input("Code secret", type="password", key="secret_code_bottom")
+    if code == "entretien":
+        st.header("🛠️ Maintenance cachée")
+        st.write("Bienvenue dans la salle des machines.")
+        if st.button("Nettoyer les doublons maintenant", key="cleaner"):
+            clean_duplicates()
