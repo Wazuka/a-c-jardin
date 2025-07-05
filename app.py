@@ -5,6 +5,9 @@ from datetime import datetime
 import pytz
 import requests
 
+if "confirm_replace" not in st.session_state:
+    st.session_state.confirm_replace = False
+
 st.set_page_config(page_title="Commencer la journée", page_icon="🌞")
 st.markdown("<h1 style='color:#0048BC;'>🌞 Commencer la journée</h1>", unsafe_allow_html=True)
 
@@ -45,6 +48,45 @@ def add_entry_to_notion(date_str, time_str, message):
     res = requests.post(url, headers=headers, json=data)  
     return res.status_code == 200 or res.status_code == 201
 
+def get_page_id_for_today():
+    url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+    headers = {
+        "Authorization": f"Bearer {NOTION_TOKEN}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28"
+    }
+
+    today = datetime.now(pytz.timezone("Europe/Paris")).strftime("%Y-%m-%d")
+    payload = {
+        "filter": {
+            "property": "date",
+            "date": {
+                "equals": today
+            }
+        }
+    }
+
+    res = requests.post(url, headers=headers, json=payload)
+    data = res.json()
+
+    if "results" in data and len(data["results"]) > 0:
+        return data["results"][0]["id"]  # Renvoie l’ID de la page
+    else:
+        return None  # Aucune page trouvée aujourd’hui
+
+def delete_page(page_id):
+    url = f"https://api.notion.com/v1/pages/{page_id}"
+    headers = {
+        "Authorization": f"Bearer {NOTION_TOKEN}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28"
+    }
+    payload = {
+        "archived": True
+    }
+    res = requests.patch(url, headers=headers, json=payload)
+    return res.status_code == 200
+
 
 # --- Interface ---
 if st.button("Je commence ma journée"):
@@ -54,9 +96,26 @@ if st.button("Je commence ma journée"):
     time_str = now.strftime("%H:%M:%S")
     message = random.choice(messages)
 
-    if add_entry_to_notion(date_str, time_str, message):
-        st.success(f"🌱 Journée commencée à {time_str} – {message}")
+    # Vérifie s’il existe déjà une entrée pour aujourd’hui
+    existing_page_id = get_page_id_for_today()
+
+    if existing_page_id and not st.session_state.confirm_replace:
+        st.warning("🌿 Une entrée existe déjà pour aujourd’hui.\n👉 Clique à nouveau pour la remplacer.")
+        st.session_state.confirm_replace = True
+
     else:
-        st.error("Échec de l'enregistrement dans Notion.")
-else:
-    st.info("Clique sur le bouton pour démarrer ta journée.")
+        if existing_page_id:
+            deleted = delete_page(existing_page_id)
+            if deleted:
+                st.info("L’entrée précédente a été supprimée.")
+            else:
+                st.error("❌ Erreur lors de la suppression de l’entrée existante.")
+                st.stop()
+
+        success = add_entry_to_notion(date_str, time_str, message)
+        if success:
+            st.success(f"🌱 Journée commencée à {time_str} – {message}")
+            st.session_state.confirm_replace = False
+        else:
+            st.error("Échec de l'enregistrement dans Notion.")
+
