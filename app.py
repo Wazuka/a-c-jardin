@@ -44,7 +44,10 @@ messages = [
 ]
 
 # Entrée du code secret dans la sidebar
-code = st.sidebar.text_input("Code secret", type="password", key="secret_code")
+with st.sidebar:
+    st.markdown("<div style='font-size:1px;'>&nbsp;</div>", unsafe_allow_html=True)
+    code = st.text_input("", type="password", key="secret_code")
+
 if code == "entretien":
     page = "Maintenance"
 else:
