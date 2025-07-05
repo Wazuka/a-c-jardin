@@ -10,7 +10,7 @@ st.markdown("<h1 style='color:#0048BC;'>🌞 Commencer la journée</h1>", unsafe
 
 # --- Paramètres Notion ---
 NOTION_TOKEN = "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"
-DATABASE_ID = "227d9baaf0138087aa24cc256305a7b4"
+DATABASE_ID = "227d9baaf01380b88d2dfdf1145b3750"
 
 # Messages possibles
 messages = [
