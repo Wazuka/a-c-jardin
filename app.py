@@ -11,6 +11,24 @@ if "confirm_replace" not in st.session_state:
 st.set_page_config(page_title="Commencer la journée", page_icon="🌞")
 st.markdown("<h1 style='color:#0048BC;'>🌞 Commencer la journée</h1>", unsafe_allow_html=True)
 
+import streamlit.components.v1 as components
+
+# Ferme la sidebar automatiquement à l'ouverture
+components.html(
+    """
+    <script>
+    const sidebar = window.parent.document.querySelector('section[data-testid="stSidebar"]');
+    if (sidebar) sidebar.style.display = 'none';
+    setTimeout(() => {
+        if (sidebar) sidebar.style.display = '';
+    }, 100);  // réactive la sidebar après chargement
+    </script>
+    """,
+    height=0,
+    width=0,
+)
+
+
 # Choix caché : entrée du code secret
 code = st.sidebar.text_input("Code secret", type="password")
 if code == "entretien":
