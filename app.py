@@ -9,36 +9,22 @@ st.set_page_config(page_title="Jardin A-Campo", page_icon=":seedling:", layout="
 
 # --- STYLES CSS CUSTOM ---
 st.markdown(
-    '''
-    <style>
-        .main {padding-bottom: 4rem;}
-        button[kind="primary"] {
-            background-color: transparent !important;
-            color: #262730 !important;
-            border: none !important;
-            font-size: 1.1rem;
-            box-shadow: none !important;
-        }
-        .emoji-button {
-            background: none;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            margin-top: 3rem;
-        }
-        .maintenance {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .hidden-box {
-            display: none;
-        }
-    </style>
-    ''',
+    """
+    <div style='position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 9999;'>
+        <form action='#secret-box'>
+            <button style='
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                text-align: center;
+            ' title="Accès maintenance">🛠️</button>
+        </form>
+    </div>
+    """,
     unsafe_allow_html=True
 )
+
 
 # --- VARIABLES D'ENVIRONNEMENT ---
 token = st.secrets.get("notion_token")
