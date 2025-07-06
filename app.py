@@ -25,8 +25,8 @@ st.markdown(
 )
 
 # --- VARIABLES D'ENVIRONNEMENT ---
-token = st.secrets.get("notion_token")
-database_id = st.secrets.get("notion_database_id")
+token = st.secrets.get("NOTION_TOKEN")
+database_id = st.secrets.get("NOTION_DATABASE_ID")
 
 # --- CLIENT NOTION ---
 if token and database_id:
