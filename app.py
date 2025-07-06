@@ -10,21 +10,19 @@ st.set_page_config(page_title="Jardin A-Campo", page_icon=":seedling:", layout="
 # --- STYLES CSS CUSTOM ---
 st.markdown(
     """
-    <div style='position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 9999;'>
-        <form action='#secret-box'>
-            <button style='
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-                text-align: center;
-            ' title="Accès maintenance">🛠️</button>
-        </form>
-    </div>
+    <style>
+        .main {padding-bottom: 4rem;}
+        button[kind="primary"] {
+            background-color: transparent !important;
+            color: #262730 !important;
+            border: none !important;
+            font-size: 1.1rem;
+            box-shadow: none !important;
+        }
+    </style>
     """,
     unsafe_allow_html=True
 )
-
 
 # --- VARIABLES D'ENVIRONNEMENT ---
 token = st.secrets.get("notion_token")
@@ -101,15 +99,18 @@ if st.button("Je commence ma journée", use_container_width=False):
         st.error(str(e))
 
 # --- BOUTON MAINTENANCE EN BAS ---
-with st.container():
-    st.markdown(
-        "<div class='maintenance'>"
-        "<button class='emoji-button' onClick="window.location.reload()">🛠️</button>"
-        "</div>",
-        unsafe_allow_html=True
-    )
+st.markdown(
+    """
+    <div style='position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 9999;'>
+        <form action='#secret-box'>
+            <button style=\"background: none; border: none; font-size: 24px; cursor: pointer; text-align: center;\" title=\"Accès maintenance\">🛠️</button>
+        </form>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-# --- ZONE SECRETE ---
+# --- ZONE SECRÈTE (MANUELLE POUR L'INSTANT) ---
 if "_show_secret" not in st.session_state:
     st.session_state["_show_secret"] = False
 
