@@ -110,11 +110,13 @@ st.markdown("</div>", unsafe_allow_html=True)
 # --- BOUTON MAINTENANCE FIXE BAS CENTRE ---
 st.markdown("""
     <div class='maintenance-button-fixed'>
-        <button onclick="window.dispatchEvent(new CustomEvent('toggleMaintenance'))" id="maintenance-btn">🛠️</button>
+    <div style='text-align: center;'>
+        <!-- Le bouton Streamlit est géré en Python -->
     </div>
+</div>
 """, unsafe_allow_html=True)
 
-if st.button(" ", key="maintenance_icon_invisible"):
+if st.button("🛠️", key="maintenance_icon"):
     st.session_state.show_maintenance = not st.session_state.show_maintenance
 
 
