@@ -31,7 +31,8 @@ if "Date" not in db_info["properties"] or db_info["properties"]["Date"]["type"] 
 # --- UTILS ---
 def get_today_iso():
     paris_tz = pytz.timezone("Europe/Paris")
-    return datetime.now(paris_tz).date().isoformat()
+    now = datetime.now(paris_tz)
+    return now.date().isoformat(), now.strftime("%H:%M")
 
 def load_messages():
     if os.path.exists(message_path):
@@ -44,6 +45,8 @@ if "confirmed" not in st.session_state:
     st.session_state.confirmed = False
 if "entry_written" not in st.session_state:
     st.session_state.entry_written = False
+if "show_maintenance" not in st.session_state:
+    st.session_state.show_maintenance = False
 
 # --- STYLES ---
 st.markdown("""
@@ -69,7 +72,7 @@ st.markdown("""
 st.markdown("<h2 style='text-align: center;'>🌼 Jardin A-Campo</h2>", unsafe_allow_html=True)
 
 # --- INTERFACE ---
-today_str = get_today_iso()
+today_str, now_str = get_today_iso()
 messages = load_messages()
 
 st.markdown("<div class='centered-container'>", unsafe_allow_html=True)
@@ -91,27 +94,27 @@ if not st.session_state.entry_written:
             notion.pages.create(
                 parent={"database_id": database_id},
                 properties={
-                    "Date": {"date": {"start": today_str}}
+                    "Date": {"date": {"start": f"{today_str}T{now_str}:00+02:00"}}
                 }
             )
             st.session_state.entry_written = True
-            st.success(random.choice(messages))
+            st.success(f"{random.choice(messages)}\nHeure enregistrée : {now_str}")
 else:
     st.info("Entrée déjà enregistrée aujourd'hui.")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # --- BOUTON MAINTENANCE ---
-st.markdown("""
+if st.markdown("""
     <div class='maintenance-button'>
-        <form action="#maintenance">
-            <button style='background: none; border: none; font-size: 22px; cursor: pointer;' title="Maintenance">🛠️</button>
-        </form>
+        <button onclick="window.location.href='#'" style='background: none; border: none; font-size: 22px; cursor: pointer;' title="Maintenance">🛠️</button>
     </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True):
+    if st.button("Afficher la maintenance"):
+        st.session_state.show_maintenance = not st.session_state.show_maintenance
 
 # --- ZONE DE MAINTENANCE ---
-with st.expander("🔧 Zone de maintenance", expanded=False):
+if st.session_state.show_maintenance:
     with st.form("maintenance_form"):
         password_input = st.text_input("Mot de passe", type="password")
         submitted = st.form_submit_button("Valider")
@@ -131,9 +134,3 @@ with st.expander("🔧 Zone de maintenance", expanded=False):
                         st.info("Aucun doublon à nettoyer aujourd’hui.")
             else:
                 st.error("Mot de passe incorrect")
-
-# --- PETIT MOT DOUX ---
-st.write("\n" * 2)
-st.markdown("<p style='text-align:center; font-style:italic; color:#888;'>" +
-            "Merci d’être là, vraiment. Le jardin n’est jamais aussi beau que lorsque tu y passes. 💙" +
-            "</p>", unsafe_allow_html=True)
