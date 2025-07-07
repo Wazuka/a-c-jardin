@@ -1,3 +1,19 @@
-Belle journée au jardin.
-Merci pour ta présence.
-Un geste simple, une présence forte.
+[score=10]
+Tu donnes le ton dès l’aube.
+C’est une entrée en scène parfaite.
+Clara sourit : tu es au rendez-vous, comme toujours.
+
+[score=8]
+Belle ponctualité, ça inspire confiance.
+On sent que tu es bien lancé.
+C’est une arrivée maîtrisée.
+
+[score=6]
+Tu prends ton rythme, doucement mais sûrement.
+Parfois, il faut simplement arriver.
+L’essentiel, c’est que tu sois là.
+
+[score=0]
+Parfois on arrive un peu plus tard. L’important, c’est d’être là.
+Chaque jour compte, même ceux qui commencent lentement.
+Clara lève les yeux, puis te fait un petit signe indulgent.
