@@ -114,12 +114,14 @@ if not st.session_state.entry_written:
             for page in results["results"]:
                 notion.pages.update(page_id=page["id"], archived=True)
             message = random.choice(messages)
+            score = calcul_score_depuis_config(now_str)
             notion.pages.create(
             parent={"database_id": database_id},
             properties={
                 "Date": {"date": {"start": f"{today_str}T{now_str}:00+02:00"}},
                 "Heure": {"rich_text": [{"text": {"content": now_str}}]},
-                "Message": {"rich_text": [{"text": {"content": message}}]}
+                "Message": {"rich_text": [{"text": {"content": message}}]},
+                "Score matin": {"number": score}
             }
         )
             st.session_state.entry_written = True
@@ -130,3 +132,8 @@ else:
     st.info("Entrée déjà enregistrée aujourd'hui.")
 
 st.markdown("</div>", unsafe_allow_html=True)
+
+
+
+
+
