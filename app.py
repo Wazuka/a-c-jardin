@@ -95,11 +95,12 @@ if not st.session_state.entry_written:
             for page in results["results"]:
                 notion.pages.update(page_id=page["id"], archived=True)
             notion.pages.create(
-                parent={"database_id": database_id},
-                properties={
-                    "Date": {"date": {"start": f"{today_str}T{now_str}:00+02:00"}}
-                }
-            )
+            parent={"database_id": database_id},
+            properties={
+                "Date": {"date": {"start": f"{today_str}T{now_str}:00+02:00"}},
+                "Heure": {"rich_text": [{"text": {"content": now_str}}]}
+            }
+        )
             st.session_state.entry_written = True
             st.success(f"{random.choice(messages)}\nHeure enregistrée : {now_str}")
 else:
