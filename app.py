@@ -11,7 +11,7 @@ st.set_page_config(page_title="Jardin A-Campo", layout="centered", initial_sideb
 # --- VARIABLES D'ENVIRONNEMENT ---
 token = st.secrets.get("NOTION_TOKEN")
 database_id = st.secrets.get("NOTION_DATABASE_ID")
-password = "🌱acampo2025"
+password = st.secrets.get("MAINTENANCE_PASSWORD")
 message_path = "messages.txt"
 
 # --- CLIENT NOTION ---
@@ -23,7 +23,6 @@ else:
 
 # --- VÉRIFICATION DE LA COLONNE "Date" ---
 db_info = notion.databases.retrieve(database_id=database_id)
-
 if "Date" not in db_info["properties"] or db_info["properties"]["Date"]["type"] != "date":
     st.error("La colonne 'Date' est manquante ou n’est pas du type 'date' dans la base Notion.")
     st.stop()
@@ -55,15 +54,17 @@ st.markdown("""
             max-width: 600px;
             margin: auto;
         }
-        .st-emotion-cache-1v0mbdj.ef3psqc11 {
-            justify-content: center;
-        }
-        .maintenance-button {
+        .maintenance-button-fixed {
             position: fixed;
             bottom: 20px;
-            width: 100%;
-            text-align: center;
+            right: 20px;
             z-index: 9999;
+        }
+        .maintenance-button-fixed button {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -87,10 +88,8 @@ if not st.session_state.entry_written:
             st.warning("Une entrée existe déjà aujourd'hui. Clique à nouveau pour confirmer l'écrasement.")
             st.session_state.confirmed = True
         else:
-            # Supprimer les existantes si confirmé
             for page in results["results"]:
                 notion.pages.update(page_id=page["id"], archived=True)
-            # Créer la nouvelle
             notion.pages.create(
                 parent={"database_id": database_id},
                 properties={
@@ -104,14 +103,17 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# --- BOUTON MAINTENANCE ---
-if st.markdown("""
-    <div class='maintenance-button'>
-        <button onclick="window.location.href='#'" style='background: none; border: none; font-size: 22px; cursor: pointer;' title="Maintenance">🛠️</button>
+# --- BOUTON MAINTENANCE FIXE BAS DROITE ---
+st.markdown("""
+    <div class='maintenance-button-fixed'>
+        <form action="#" method="post">
+            <button name="maintenance_trigger" title="Maintenance">🛠️</button>
+        </form>
     </div>
-""", unsafe_allow_html=True):
-    if st.button("Afficher la maintenance"):
-        st.session_state.show_maintenance = not st.session_state.show_maintenance
+""", unsafe_allow_html=True)
+
+if st.session_state.get("maintenance_triggered") or st.session_state.show_maintenance:
+    st.session_state.show_maintenance = True
 
 # --- ZONE DE MAINTENANCE ---
 if st.session_state.show_maintenance:
