@@ -96,23 +96,18 @@ if not st.session_state.entry_written:
                 notion.pages.update(page_id=page["id"], archived=True)
             message = random.choice(messages)
             notion.pages.create(
-            parent={"database_id": database_id},
-            properties={
-                "Date": {"date": {"start": f"{today_str}T{now_str}:00+02:00"}},
-                "Heure": {"rich_text": [{"text": {"content": now_str}}]},
-                "Message": {"rich_text": [{"text": {"content": message}}]}
-            }
-        )
+                parent={"database_id": database_id},
+                properties={
+                    "Date": {"date": {"start": f"{today_str}T{now_str}:00+02:00"}},
+                    "Heure": {"rich_text": [{"text": {"content": now_str}}]},
+                    "Message": {"rich_text": [{"text": {"content": message}}]}
+                }
+            )
             st.session_state.entry_written = True
             st.markdown(f"<div style='background-color:#eaf6ec; padding:0.5em 1em; border-radius:8px;'>"
-            f"{message}<br><i>Heure enregistrée : {now_str}</i></div>", unsafe_allow_html=True)
+                        f"{message}<br><i>Heure enregistrée : {now_str}</i></div>", unsafe_allow_html=True)
 
 else:
     st.info("Entrée déjà enregistrée aujourd'hui.")
 
 st.markdown("</div>", unsafe_allow_html=True)
-
-
-
-
-
