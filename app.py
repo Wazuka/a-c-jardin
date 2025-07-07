@@ -2,6 +2,8 @@ import streamlit as st
 from datetime import datetime
 from notion_client import Client
 import pytz
+import random
+import os
 
 # --- CONFIG PAGE ---
 st.set_page_config(page_title="Jardin A-Campo", layout="centered", initial_sidebar_state="collapsed")
@@ -9,6 +11,8 @@ st.set_page_config(page_title="Jardin A-Campo", layout="centered", initial_sideb
 # --- VARIABLES D'ENVIRONNEMENT ---
 token = st.secrets.get("NOTION_TOKEN")
 database_id = st.secrets.get("NOTION_DATABASE_ID")
+password = "🌱acampo2025"
+message_path = "messages.txt"
 
 # --- CLIENT NOTION ---
 if token and database_id:
@@ -24,20 +28,32 @@ if "Date" not in db_info["properties"] or db_info["properties"]["Date"]["type"] 
     st.error("La colonne 'Date' est manquante ou n’est pas du type 'date' dans la base Notion.")
     st.stop()
 
-# --- FONCTION UTILITAIRE ---
+# --- UTILS ---
 def get_today_iso():
     paris_tz = pytz.timezone("Europe/Paris")
     return datetime.now(paris_tz).date().isoformat()
 
+def load_messages():
+    if os.path.exists(message_path):
+        with open(message_path, "r", encoding="utf-8") as f:
+            return [line.strip() for line in f if line.strip()]
+    return ["Belle journée au jardin.", "Merci pour ta présence.", "Un geste simple, une présence forte."]
+
+# --- SESSION INIT ---
+if "confirmed" not in st.session_state:
+    st.session_state.confirmed = False
+if "entry_written" not in st.session_state:
+    st.session_state.entry_written = False
+
 # --- STYLES ---
 st.markdown("""
     <style>
-        .centered-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 400px;
-            margin: 0 auto;
+        .main .block-container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .st-emotion-cache-1v0mbdj.ef3psqc11 {
+            justify-content: center;
         }
         .maintenance-button {
             position: fixed;
@@ -49,42 +65,43 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- TITRE ---
+st.markdown("<h2 style='text-align: center;'>🌼 Jardin A-Campo</h2>", unsafe_allow_html=True)
+
 # --- INTERFACE ---
-st.markdown("<h2 style='text-align: center;'>🌱 Jardin A-Campo</h2>", unsafe_allow_html=True)
+today_str = get_today_iso()
+messages = load_messages()
 
-with st.container():
-    st.markdown("<div class='centered-container'>", unsafe_allow_html=True)
-    if st.button("Je commence ma journée"):
-        today_str = get_today_iso()
+st.markdown("<div class='centered-container'>", unsafe_allow_html=True)
 
-        # Vérifie si une entrée existe déjà aujourd'hui
+if not st.session_state.entry_written:
+    if st.button("📥 Enregistrer mon arrivée"):
         results = notion.databases.query(
             database_id=database_id,
-            filter={
-                "property": "Date",
-                "date": {
-                    "equals": today_str
-                }
-            }
+            filter={"property": "Date", "date": {"equals": today_str}}
         )
-
-        if results["results"]:
-            st.warning("Une entrée existe déjà pour aujourd’hui.")
+        if results["results"] and not st.session_state.confirmed:
+            st.warning("Une entrée existe déjà aujourd'hui. Clique à nouveau pour confirmer l'écrasement.")
+            st.session_state.confirmed = True
         else:
-            response = notion.pages.create(
+            # Supprimer les existantes si confirmé
+            for page in results["results"]:
+                notion.pages.update(page_id=page["id"], archived=True)
+            # Créer la nouvelle
+            notion.pages.create(
                 parent={"database_id": database_id},
                 properties={
-                    "Date": {
-                        "date": {
-                            "start": today_str
-                        }
-                    }
+                    "Date": {"date": {"start": today_str}}
                 }
             )
-            st.success("🌞 Journée enregistrée avec succès !")
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.session_state.entry_written = True
+            st.success(random.choice(messages))
+else:
+    st.info("Entrée déjà enregistrée aujourd'hui.")
 
-# --- BOUTON MAINTENANCE EN BAS ---
+st.markdown("</div>", unsafe_allow_html=True)
+
+# --- BOUTON MAINTENANCE ---
 st.markdown("""
     <div class='maintenance-button'>
         <form action="#maintenance">
@@ -95,20 +112,28 @@ st.markdown("""
 
 # --- ZONE DE MAINTENANCE ---
 with st.expander("🔧 Zone de maintenance", expanded=False):
-    if st.button("🧹 Nettoyer les doublons"):
-        today_str = get_today_iso()
-        entries = notion.databases.query(
-            database_id=database_id,
-            filter={
-                "property": "Date",
-                "date": {
-                    "equals": today_str
-                }
-            }
-        )
-        if len(entries["results"]) > 1:
-            for page in entries["results"][1:]:
-                notion.pages.update(page_id=page["id"], archived=True)
-            st.success("Doublons archivés avec succès.")
-        else:
-            st.info("Aucun doublon à nettoyer aujourd’hui.")
+    with st.form("maintenance_form"):
+        password_input = st.text_input("Mot de passe", type="password")
+        submitted = st.form_submit_button("Valider")
+        if submitted:
+            if password_input == password:
+                st.success("Accès maintenance autorisé")
+                if st.button("🧹 Supprimer les doublons"):
+                    entries = notion.databases.query(
+                        database_id=database_id,
+                        filter={"property": "Date", "date": {"equals": today_str}}
+                    )
+                    if len(entries["results"]) > 1:
+                        for page in entries["results"][1:]:
+                            notion.pages.update(page_id=page["id"], archived=True)
+                        st.success("Doublons archivés avec succès.")
+                    else:
+                        st.info("Aucun doublon à nettoyer aujourd’hui.")
+            else:
+                st.error("Mot de passe incorrect")
+
+# --- PETIT MOT DOUX ---
+st.write("\n" * 2)
+st.markdown("<p style='text-align:center; font-style:italic; color:#888;'>" +
+            "Merci d’être là, vraiment. Le jardin n’est jamais aussi beau que lorsque tu y passes. 💙" +
+            "</p>", unsafe_allow_html=True)
