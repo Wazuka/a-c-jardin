@@ -1,0 +1,26 @@
+[
+  {
+    "heure_max": "07:00",
+    "score": 10
+  },
+  {
+    "heure_max": "08:00",
+    "score": 9
+  },
+  {
+    "heure_max": "09:00",
+    "score": 8
+  },
+  {
+    "heure_max": "10:00",
+    "score": 6
+  },
+  {
+    "heure_max": "11:00",
+    "score": 4
+  },
+  {
+    "heure_max": "24:00",
+    "score": 2
+  }
+]
