@@ -104,19 +104,18 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# --- BOUTON MAINTENANCE FIXE BAS DROITE ---
-st.markdown("""
-    <div class='maintenance-button-fixed'>
-        <form action="#" method="post">
-            <button name="maintenance_trigger" title="Maintenance">🛠️</button>
-        </form>
-    </div>
-""", unsafe_allow_html=True)
+# --- BOUTON MAINTENANCE FIXE BAS CENTRE ---
+with st.container():
+    st.markdown("""
+        <div class='maintenance-button-fixed'>
+        </div>
+    """, unsafe_allow_html=True)
+    maintenance_col = st.columns(3)[1]  # colonne centrale
+    with maintenance_col:
+        if st.button("🛠️", key="maintenance_icon"):
+            st.session_state.show_maintenance = not st.session_state.show_maintenance
 
-if st.session_state.get("maintenance_triggered") or st.session_state.show_maintenance:
-    st.session_state.show_maintenance = True
 
-# --- ZONE DE MAINTENANCE ---
 if st.session_state.show_maintenance:
     with st.form("maintenance_form"):
         password_input = st.text_input("Mot de passe", type="password")
