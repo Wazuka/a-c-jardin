@@ -57,7 +57,8 @@ st.markdown("""
         .maintenance-button-fixed {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 9999;
         }
         .maintenance-button-fixed button {
@@ -79,7 +80,7 @@ messages = load_messages()
 st.markdown("<div class='centered-container'>", unsafe_allow_html=True)
 
 if not st.session_state.entry_written:
-    if st.button("📥 Enregistrer mon arrivée"):
+    if st.button("🚀 Commencer ma journée"):
         results = notion.databases.query(
             database_id=database_id,
             filter={"property": "Date", "date": {"equals": today_str}}
