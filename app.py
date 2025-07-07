@@ -1,28 +1,10 @@
-
 import streamlit as st
 from datetime import datetime
 from notion_client import Client
 import pytz
 
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Jardin A-Campo", page_icon=":seedling:", layout="wide")
-
-# --- STYLES CSS CUSTOM ---
-st.markdown(
-    """
-    <style>
-        .main {padding-bottom: 4rem;}
-        button[kind="primary"] {
-            background-color: transparent !important;
-            color: #262730 !important;
-            border: none !important;
-            font-size: 1.1rem;
-            box-shadow: none !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# --- CONFIG PAGE ---
+st.set_page_config(page_title="Jardin A-Campo", layout="centered", initial_sidebar_state="collapsed")
 
 # --- VARIABLES D'ENVIRONNEMENT ---
 token = st.secrets.get("NOTION_TOKEN")
@@ -35,87 +17,98 @@ else:
     st.error("Les identifiants Notion ne sont pas correctement chargés.")
     st.stop()
 
-# --- EN-TÊTE ---
-st.markdown("<h1 style='text-align: center;'>🌱 Jardin A-Campo</h1>", unsafe_allow_html=True)
+# --- VÉRIFICATION DE LA COLONNE "Date" ---
+db_info = notion.databases.retrieve(database_id=database_id)
 
-# --- BOUTON PRINCIPAL ---
-if st.button("Je commence ma journée", use_container_width=False):
+if "Date" not in db_info["properties"] or db_info["properties"]["Date"]["type"] != "date":
+    st.error("La colonne 'Date' est manquante ou n’est pas du type 'date' dans la base Notion.")
+    st.stop()
+
+# --- FONCTION UTILITAIRE ---
+def get_today_iso():
     paris_tz = pytz.timezone("Europe/Paris")
-    now = datetime.now(paris_tz)
-    today_str = now.strftime("%Y-%m-%d")
+    return datetime.now(paris_tz).date().isoformat()
 
-    # Vérifier les entrées existantes pour aujourd'hui
-    results = notion.databases.query(
-        **{
-            "database_id": database_id,
-            "filter": {
+# --- STYLES ---
+st.markdown("""
+    <style>
+        .centered-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .maintenance-button {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            z-index: 9999;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- INTERFACE ---
+st.markdown("<h2 style='text-align: center;'>🌱 Jardin A-Campo</h2>", unsafe_allow_html=True)
+
+with st.container():
+    st.markdown("<div class='centered-container'>", unsafe_allow_html=True)
+    if st.button("Je commence ma journée"):
+        today_str = get_today_iso()
+
+        # Vérifie si une entrée existe déjà aujourd'hui
+        results = notion.databases.query(
+            database_id=database_id,
+            filter={
                 "property": "Date",
                 "date": {
                     "equals": today_str
                 }
             }
-        }
-    )
+        )
 
-    if len(results["results"]) > 0:
-        page_id = results["results"][0]["id"]
-        notion.pages.update(page_id=page_id, archived=True)
-        st.info("L’entrée précédente a été supprimée.")
-
-    try:
-        notion.pages.create(
-            **{
-                "parent": {"database_id": database_id},
-                "properties": {
-                    "Nom": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": "🌄 Arrivée matinale"
-                                }
-                            }
-                        ]
-                    },
+        if results["results"]:
+            st.warning("Une entrée existe déjà pour aujourd’hui.")
+        else:
+            response = notion.pages.create(
+                parent={"database_id": database_id},
+                properties={
                     "Date": {
                         "date": {
                             "start": today_str
                         }
-                    },
-                    "Heure": {
-                        "rich_text": [
-                            {
-                                "text": {
-                                    "content": now.strftime("%H:%M")
-                                }
-                            }
-                        ]
                     }
+                }
+            )
+            st.success("🌞 Journée enregistrée avec succès !")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# --- BOUTON MAINTENANCE EN BAS ---
+st.markdown("""
+    <div class='maintenance-button'>
+        <form action="#maintenance">
+            <button style='background: none; border: none; font-size: 22px; cursor: pointer;' title="Maintenance">🛠️</button>
+        </form>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- ZONE DE MAINTENANCE ---
+with st.expander("🔧 Zone de maintenance", expanded=False):
+    if st.button("🧹 Nettoyer les doublons"):
+        today_str = get_today_iso()
+        entries = notion.databases.query(
+            database_id=database_id,
+            filter={
+                "property": "Date",
+                "date": {
+                    "equals": today_str
                 }
             }
         )
-        st.success("Bravo, ta journée est lancée !")
-    except Exception as e:
-        st.error("Échec de l'enregistrement dans Notion.")
-        st.error(str(e))
-
-# --- BOUTON MAINTENANCE EN BAS ---
-st.markdown(
-    """
-    <div style='position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 9999;'>
-        <form action='#secret-box'>
-            <button style=\"background: none; border: none; font-size: 24px; cursor: pointer; text-align: center;\" title=\"Accès maintenance\">🛠️</button>
-        </form>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- ZONE SECRÈTE (MANUELLE POUR L'INSTANT) ---
-if "_show_secret" not in st.session_state:
-    st.session_state["_show_secret"] = False
-
-if st.session_state["_show_secret"]:
-    st.subheader("🔧 Maintenance cachée")
-    st.write("Bienvenue dans la salle des machines.")
-    if st.button("Nettoyer les doublons maintenant"):
-        st.success("Nettoyage effectué.")
+        if len(entries["results"]) > 1:
+            for page in entries["results"][1:]:
+                notion.pages.update(page_id=page["id"], archived=True)
+            st.success("Doublons archivés avec succès.")
+        else:
+            st.info("Aucun doublon à nettoyer aujourd’hui.")
