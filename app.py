@@ -104,12 +104,13 @@ if not st.session_state.entry_written:
             }
         )
             st.session_state.entry_written = True
-            st.success(f"{message}\\nHeure enregistrée : {now_str}")
+            st.success(f"{message}<br><i>Heure enregistrée : {now_str}</i>", unsafe_allow_html=True)
 
 else:
     st.info("Entrée déjà enregistrée aujourd'hui.")
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 
