@@ -108,36 +108,7 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# --- BOUTON MAINTENANCE FIXE BAS CENTRE ---
-st.markdown("""
-    <div class='maintenance-button-fixed'>
-    <div style='text-align: center;'>
-        <!-- Le bouton Streamlit est géré en Python -->
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-if st.button("🛠️", key="maintenance_icon"):
-    st.session_state.show_maintenance = not st.session_state.show_maintenance
 
 
-if st.session_state.show_maintenance:
-    with st.form("maintenance_form"):
-        password_input = st.text_input("Mot de passe", type="password")
-        submitted = st.form_submit_button("Valider")
-        if submitted:
-            if password_input == password:
-                st.success("Accès maintenance autorisé")
-                if st.button("🧹 Supprimer les doublons"):
-                    entries = notion.databases.query(
-                        database_id=database_id,
-                        filter={"property": "Date", "date": {"equals": today_str}}
-                    )
-                    if len(entries["results"]) > 1:
-                        for page in entries["results"][1:]:
-                            notion.pages.update(page_id=page["id"], archived=True)
-                        st.success("Doublons archivés avec succès.")
-                    else:
-                        st.info("Aucun doublon à nettoyer aujourd’hui.")
-            else:
-                st.error("Mot de passe incorrect")
+
+
