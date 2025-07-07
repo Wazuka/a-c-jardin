@@ -66,6 +66,9 @@ st.markdown("""
             border: none;
             font-size: 22px;
             cursor: pointer;
+            color: inherit;
+            box-shadow: none;
+            padding: 0;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -105,15 +108,14 @@ else:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # --- BOUTON MAINTENANCE FIXE BAS CENTRE ---
-with st.container():
-    st.markdown("""
-        <div class='maintenance-button-fixed'>
-        </div>
-    """, unsafe_allow_html=True)
-    maintenance_col = st.columns(3)[1]  # colonne centrale
-    with maintenance_col:
-        if st.button("🛠️", key="maintenance_icon"):
-            st.session_state.show_maintenance = not st.session_state.show_maintenance
+st.markdown("""
+    <div class='maintenance-button-fixed'>
+        <button onclick="window.dispatchEvent(new CustomEvent('toggleMaintenance'))" id="maintenance-btn">🛠️</button>
+    </div>
+""", unsafe_allow_html=True)
+
+if st.button(" ", key="maintenance_icon_invisible"):
+    st.session_state.show_maintenance = not st.session_state.show_maintenance
 
 
 if st.session_state.show_maintenance:
