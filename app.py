@@ -104,8 +104,7 @@ if not st.session_state.entry_written:
             }
         )
             st.session_state.entry_written = True
-st.success(f"{message}\\nHeure enregistrée : {now_str}")
-
+            st.success(f"{message}\\nHeure enregistrée : {now_str}")
 
 else:
     st.info("Entrée déjà enregistrée aujourd'hui.")
